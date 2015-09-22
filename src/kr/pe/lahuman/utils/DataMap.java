@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Clob;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -18,25 +17,55 @@ import java.util.Set;
 /**
  * The Class DataMap.
  *
- * <b>ORACLE 용으로 Key 값을 무조건 대문자로 변경하여 준다.</b>
- *  
  * @param <K> the key type
  * @param <V> the value type
  */
-public class DataMap<K, V> implements Map<K, V>, Serializable {
+public class DataMap<K, V>  extends HashMap<K, V>{
 
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;
-	/** The data map. */
-	private Map<K, V> dataMap;
 
-	/**
-	 * Instantiates a new data map.
+    public DataMap() {
+        super();
+    }
+
+    /**
+	 * underscore('_') to Camel Case
+	 * (all word translate small letter)
+	 * ex) USEr_NAME => userName
+	 * @param key
+	 * @return
 	 */
-	public DataMap(){
-		this.dataMap = new HashMap<K, V>();
+	private String convert2CamelCase(String key){
+		if(key.indexOf('_') < 0 && Character.isLowerCase(key.charAt(0))){
+			return key;
+		}
+		StringBuilder result = new StringBuilder();
+		int len = key.length();
+		boolean nextUpper = false;
+		for(int i=0; i< len; i++){
+			char currentChar = key.charAt(i);
+			if(currentChar == '_'){
+				nextUpper = true;
+			}else{
+				if(nextUpper){
+					result.append(Character.toUpperCase(currentChar));
+					nextUpper= false;
+				}else{
+					result.append(Character.toLowerCase(currentChar));
+				}
+			}
+		}
+		return result.toString();
 	}
-	
+
+	@Override
+	public V put(K key, V value){
+		if(key instanceof String){
+			return super.put((K) convert2CamelCase((String)key), value);
+		}
+		return super.put(key, value);
+	}
 
 
 	/**
@@ -45,83 +74,19 @@ public class DataMap<K, V> implements Map<K, V>, Serializable {
 	 * @param srcMapParam the src map param
 	 */
 	public DataMap (Map<K, V> srcMapParam){
-		this();
+
 		if( srcMapParam != null ){
-			this.dataMap.clear();
+			this.clear();
 			Iterator<K> it = srcMapParam.keySet().iterator();
 			while( it.hasNext() ){
 				K key = it.next();
 				V val = srcMapParam.get(key);
-				this.dataMap.put(key, val);
+				this.put(key, val);
 			}
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see java.util.Map#clear()
-	 */
-	public void clear() {
-		this.dataMap.clear();
-	}
 
-	/* (non-Javadoc)
-	 * @see java.util.Map#containsKey(java.lang.Object)
-	 */
-	public boolean containsKey(Object key) {
-		if(key instanceof String){
-				return this.dataMap.containsKey(((String)key).toUpperCase());
-		}else{
-			return this.dataMap.containsKey(key);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#containsValue(java.lang.Object)
-	 */
-	public boolean containsValue(Object value) {
-		if(value instanceof String){
-			return this.dataMap.containsValue(((String)value).toUpperCase());
-		}else{
-			return this.dataMap.containsValue(value);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#entrySet()
-	 */
-	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		return this.dataMap.entrySet();
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#get(java.lang.Object)
-	 */
-	public V get(Object key) {
-		if(key instanceof String){
-			
-			if(this.dataMap.get(((String)key).toUpperCase()) == null){
-				return (V) null;
-			}else{
-				return this.dataMap.get(((String)key).toUpperCase());
-			}
-		}else{
-			return this.dataMap.get(key);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#isEmpty()
-	 */
-	public boolean isEmpty() {
-		return this.dataMap.isEmpty();
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#keySet()
-	 */
-	public Set<K> keySet() {
-		return this.dataMap.keySet();
-	}
 	
 	/**
 	 * DataMap에 현재 담겨있는 키값을 String[] 배열로 리턴한다.
@@ -136,50 +101,16 @@ public class DataMap<K, V> implements Map<K, V>, Serializable {
 		Iterator<K> iter = keySet.iterator();
 		int count = 0;
 		while(iter.hasNext()){
-			keys[count++] = (String)iter.next();
+            Object key = iter.next();
+            if(key instanceof String)
+			    keys[count++] = (String)key;
+            else
+                keys[count++] = key.toString();
 		}
 		return keys;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.util.Map#put(java.lang.Object, java.lang.Object)
-	 */
-	public V put(K key, V value) {
-		if(key instanceof String){
-			return dataMap.put((K) ((String)key).toUpperCase(), value );
-		}else{
-			return dataMap.put(key, value );
-		}
-	}
 
-	/* (non-Javadoc)
-	 * @see java.util.Map#putAll(java.util.Map)
-	 */
-	public void putAll(Map<? extends K, ? extends V> m) {
-		if(m != null)
-			this.dataMap.putAll(m);
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#remove(java.lang.Object)
-	 */
-	public V remove(Object key) {
-		return this.dataMap.remove(key);
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#size()
-	 */
-	public int size() {
-		return this.dataMap.size();
-	}
-
-	/* (non-Javadoc)
-	 * @see java.util.Map#values()
-	 */
-	public Collection<V> values() {
-		return this.dataMap.values();
-	}
 
 	/**
 	 * Gets the string.
@@ -191,7 +122,6 @@ public class DataMap<K, V> implements Map<K, V>, Serializable {
 	public String getString( String key ) {
 		String rtn = "";
 		try {
-//			rtn = ServletUtil.removeHtml(getString(key, ""));
 			rtn = (getString(key, ""));
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -207,7 +137,6 @@ public class DataMap<K, V> implements Map<K, V>, Serializable {
 	 * 해당 문자가 없을 null일 경우 대체 문자열로 변경합니다.
 	 *
 	 * @param key key value
-	 * @param replaceValue replace string value
 	 * @return the string
 	 * @throws SQLException 
 	 * @throws IOException 
@@ -217,7 +146,6 @@ public class DataMap<K, V> implements Map<K, V>, Serializable {
 		
 		Object obj = get( key );
 		if( obj instanceof String[] ){
-			String[] strArr = (String[])obj;
 			returnVal = (String[])obj;
 		}
 		
@@ -342,13 +270,19 @@ public class DataMap<K, V> implements Map<K, V>, Serializable {
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		String key;
-		String val;
-		Iterator<K> it = dataMap.keySet().iterator();
+		Object key;
+		Object val;
+		Iterator<K> it = keySet().iterator();
+        boolean isFirst = true;
 		while( it.hasNext() ){
-			key = (String) it.next();
-			val = getString( key );
-			sb.append("(").append(key).append(",").append( val  ).append(")");
+			key = it.next();
+			val = get( key );
+            if(isFirst){
+                isFirst = false;
+            }else{
+                sb.append(", ");
+            }
+			sb.append("\"").append(key).append(":").append( val  ).append("\"");
 		}
 		sb.append("}");
 		return sb.toString();

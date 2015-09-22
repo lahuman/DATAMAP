@@ -10,5 +10,9 @@ DataMap use HashMap.
  + `getKeys` 키 정보를 `String[]`로 전달
  + `getString`, 'getInt`, 'getDouble` 추가
  + `toString` 문자열로 해당 Key와 Value를 전달
- 
+
+- 2015.09.22 변경
+ + HashMap 을 상속 받도록 변경
+ + 낙타 표기법으로 표출 : https://github.com/eGovFrame/egovframework.rte.root/blob/master/Persistence/egovframework.rte.psl.dataaccess/src/main/java/egovframework/rte/psl/dataaccess/util/EgovMap.java
+
  
